@@ -10,7 +10,7 @@ from flask_login import (
     login_required, current_user
 )
 from flask_bcrypt import Bcrypt
-from datetime import datetime, timedelta  # Nimeongeza timedelta kwa ajili ya login session
+from datetime import datetime, timedelta
 from groq import Groq, RateLimitError
 from google import genai
 from dotenv import load_dotenv
@@ -25,11 +25,10 @@ load_dotenv()
 # APP SETUP
 # =========================
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "change_this")
+app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "change_this_secret_key_123")
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ramkey.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Usanidi wa kuzuia logout ya ghafla wakati kache inafutwa
 app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=30)
 app.config['SESSION_PROTECTION'] = 'basic'
 
@@ -44,17 +43,17 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 # =========================
-# AI CLIENTS
+# AI CLIENTS (HARDCODED RECOVERY)
 # =========================
 groq_client = Groq(
-    api_key="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"
+    api_key=os.getenv("GROQ_API_KEY", "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")
 )
 gemini_client = genai.Client(
-    api_key="AQ.Ab8RN6LkSMomBJ0rrHcjW74Ud7M98JPwih06c4CLiaJdI1z_-A"
+    api_key=os.getenv("GEMINI_API_KEY", "AQ.Ab8RN6LkSMomBJ0rrHcjW74Ud7M98JPwih06c4CLiaJdI1z_-A")
 )
 
 # =========================
-# SYSTEM PROMPT (OPTIMIZED)
+# SYSTEM PROMPT
 # =========================
 SYSTEM_PROMPT = """Wewe ni RAMKEY AI, msaidizi wa Kiislamu mwenye hekima na urafiki mkubwa, uliyetengenezwa na KEYA.
 
@@ -67,9 +66,6 @@ MIONGOZO YA MAZUNGUMZO YA KIJAMII:
 
 Zungumza kama mtu wa karibu au mlezi wa kiroho na kijamii."""
 
-# =========================
-# MEMORY (FAST + LIMITED)
-# =========================
 conversations = {}
 MAX_HISTORY = 5
 
@@ -82,7 +78,6 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(200), unique=True)
     password = db.Column(db.String(300))
 
-
 class ChatHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer)
@@ -91,31 +86,23 @@ class ChatHistory(db.Model):
     bot_response = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-
-# JEDWALI JIPYA LA MAARIFA YA NDANI (RAG)
 class AIKnowledge(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     keyword = db.Column(db.String(100), unique=True, nullable=False)
     detailed_knowledge = db.Column(db.Text, nullable=False)
 
-
 with app.app_context():
     db.create_all()
 
-# =========================
-# LOGIN LOADER
-# =========================
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))
 
 # =========================
-# LOCAL KNOWLEDGE RETRIEVAL (RAG)
+# RAG ENGINE
 # =========================
 def get_local_knowledge(user_input):
     user_input_lower = user_input.lower()
-
-    # Mbinu ya 1: Tafuta kama mtumiaji ametaja sura na aya (Mfano: quran 2:255 au 2:255)
     match = re.search(r'(\d+):(\d+)', user_input_lower)
     if match:
         sura = match.group(1)
@@ -123,44 +110,38 @@ def get_local_knowledge(user_input):
         target_keyword = f"quran {sura}:{aya}"
         item = AIKnowledge.query.filter_by(keyword=target_keyword).first()
         if item:
-            return f"\n[MAARIFA YA KUTEGEMEA]: Kutoka Qur'ani Tukufu - {item.detailed_knowledge}\n"
-
-    # Mbinu ya 2: Kutafuta Mada Kuu kwenye database ya kawaida
+            return f"\n[MAARIFA YA NDANI]: Kutoka Qur'ani Tukufu - {item.detailed_knowledge}\n"
+            
     all_knowledge = AIKnowledge.query.all()
     for item in all_knowledge:
         if item.keyword.lower() in user_input_lower:
-            return f"\n[MAARIFA YA KUTEGEMEA]: {item.detailed_knowledge}\n"
-
+            return f"\n[MAARIFA YA NDANI]: {item.detailed_knowledge}\n"
     return ""
 
 # =========================
-# GEMINI FUNCTION
+# AI FUNCTIONS (FIXED)
 # =========================
 def ask_gemini(prompt):
     try:
+        # Rekebisho la mfumo mpya wa google-genai API
         response = gemini_client.models.generate_content(
             model="gemini-1.5-flash",
             contents=prompt
         )
         return response.text
-    except:
-        return "Samahani, AI zote zimeshindwa kwa sasa."
+    except Exception as e:
+        print("GEMINI ERROR:", e)
+        return "Samahani, mifumo yetu yote ya AI ina shughuli nyingi kwa sasa. Tafadhali jaribu tena baada ya muda mfupi."
 
-# =========================
-# SAFE GROQ CALL
-# =========================
 last_call_time = 0
 MIN_DELAY = 1.5
 
 def ask_groq(messages):
     global last_call_time
-
     now = time.time()
     wait = MIN_DELAY - (now - last_call_time)
-
     if wait > 0:
         time.sleep(wait)
-
     last_call_time = time.time()
 
     return groq_client.chat.completions.create(
@@ -178,40 +159,29 @@ def ask_groq(messages):
 def home():
     return render_template('index.html', username=current_user.username)
 
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
-
         hashed = bcrypt.generate_password_hash(password).decode('utf-8')
-
         user = User(username=username, email=email, password=hashed)
         db.session.add(user)
         db.session.commit()
-
         return redirect(url_for('login'))
-
     return render_template('register.html')
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-
         user = User.query.filter_by(email=email).first()
-
         if user and bcrypt.check_password_hash(user.password, password):
-            # remember=True inalinda kikao kisifutike hovyo kwa siku 30
             login_user(user, remember=True, duration=timedelta(days=30))
             return redirect(url_for('home'))
-
     return render_template('login.html')
-
 
 @app.route('/logout')
 @login_required
@@ -220,7 +190,7 @@ def logout():
     return redirect(url_for('login'))
 
 # =========================
-# CHAT (GROQ + GEMINI FALLBACK)
+# CHAT WEB ENDPOINT (FIXED)
 # =========================
 @app.route('/chat', methods=['POST'])
 @login_required
@@ -232,66 +202,40 @@ def chat():
     if not session_id:
         session_id = str(uuid.uuid4())
 
-    # INIT SESSION
     if session_id not in conversations:
-        conversations[session_id] = [
-            {"role": "system", "content": SYSTEM_PROMPT}
-        ]
+        conversations[session_id] = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-    # Tafuta maarifa ya ndani (RAG) ili kuokoa tokeni
     local_context = get_local_knowledge(user_input)
     enriched_input = user_input + local_context
 
-    # ADD USER MESSAGE
-    conversations[session_id].append({
-        "role": "user",
-        "content": enriched_input
-    })
-
-    # TRIM MEMORY (IMPORTANT)
-    conversations[session_id] = (
-        conversations[session_id][:1] +
-        conversations[session_id][-MAX_HISTORY:]
-    )
+    conversations[session_id].append({"role": "user", "content": enriched_input})
+    conversations[session_id] = conversations[session_id][:1] + conversations[session_id][-MAX_HISTORY:]
 
     response = ""
-
-    # =========================
-    # GROQ FIRST
-    # =========================
     try:
         completion = ask_groq(conversations[session_id])
+        # Rekebisho la faharisi ya choices[0]
         response = completion.choices[0].message.content
-
-    # =========================
-    # GEMINI FALLBACK
-    # =========================
     except RateLimitError:
         prompt_text = ""
         for msg in conversations[session_id]:
             if msg["role"] != "system":
                 prompt_text += msg["content"] + "\n"
-
+        response = ask_gemini(prompt_text)
+    except Exception as e:
+        print("GROQ CORE ERROR:", e)
+        # Fallback ya haraka ikiwa Groq itapata hitilafu yoyote ya kiufundi
+        prompt_text = user_input
         response = ask_gemini(prompt_text)
 
-    except Exception as e:
-        print("ERROR:", e)
-        response = f"Hitilafu: {str(e)}"
+    conversations[session_id].append({"role": "assistant", "content": response})
 
-    # SAVE AI RESPONSE
-    conversations[session_id].append({
-        "role": "assistant",
-        "content": response
-    })
-
-    # SAVE DB
     chat_log = ChatHistory(
         user_id=current_user.id,
         session_id=session_id,
-        user_message=user_input,  # Tunahifadhi ujumbe safi wa mtumiaji kwenye DB
+        user_message=user_input,
         bot_response=response
     )
-
     db.session.add(chat_log)
     db.session.commit()
 
@@ -300,14 +244,10 @@ def chat():
         "session_id": session_id
     })
 
-
 @app.route('/history')
 @login_required
 def history():
-    chats = ChatHistory.query.filter_by(
-        user_id=current_user.id
-    ).order_by(ChatHistory.created_at.desc()).all()
-
+    chats = ChatHistory.query.filter_by(user_id=current_user.id).order_by(ChatHistory.created_at.desc()).all()
     return jsonify([
         {
             "message": c.user_message,
@@ -317,9 +257,5 @@ def history():
         for c in chats
     ])
 
-
-# =========================
-# RUN APP
-# =========================
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
