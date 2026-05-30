@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAMKEY AI - Jisajili (Register)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=gnYfVCDe3nwrtK43dNSt0j2etrFNC8RpTt8SY8LEkN5vcRwxnAPkIpF7v_6MJbbCZXNIFEfpoXXdF6dbE1WEDkaAaWsbbxyKOW1NeLDZWmRuUWDszhwcwCj58VaeCcaig0vm5iLYzwDEZGNuf1e1WQ" charset="UTF-8"></script><link rel="stylesheet" crossorigin="anonymous" href="https://gc.kis.v2.scr.kaspersky-labs.com/E3E8934C-235A-4B0E-825A-35A08381A191/abn/main.css?attr=aHR0cHM6Ly93d3cucHl0aG9uYW55d2hlcmUuY29tL3VzZXIvS2V5YS9maWxlcy9ob21lL0tleWEvTXlmYXJtL3RlbXBsYXRlcy9yZWdpc3Rlci5odG1s"/><style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #020617, #0f172a, #111827);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            padding: 20px;
+        }
+        .auth-container {
+            width: 100%;
+            max-width: 420px;
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: 40px 30px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            animation: fadeIn 0.4s ease;
+        }
+        .logo-circle {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #10b981, #06b6d4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            font-weight: bold;
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.4);
+            margin: 0 auto 20px;
+        }
+        h2 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #10b981, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-size: 13px;
+            color: #cbd5e1;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .input-field {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: white;
+            font-size: 15px;
+            outline: none;
+            transition: 0.3s;
+        }
+        .input-field:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+        }
+        .auth-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #10b981, #06b6d4);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+            margin-top: 10px;
+        }
+        .auth-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+        }
+        .footer-text {
+            margin-top: 25px;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        .footer-text a {
+            color: #06b6d4;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .footer-text a:hover {
+            text-decoration: underline;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="auth-container">
+        <div class="logo-circle">☪</div>
+        <h2>Unda Akaunti</h2>
+        <p class="subtitle">Anza kufurahia huduma ya RAMKEY AI</p>
+
+        <form action="/register" method="POST">
+            <div class="form-group">
+                <label for="username">Jina la Mtumiaji (Username)</label>
+                <input type="text" id="username" name="username" class="input-field" placeholder="Jina lako" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Barua Pepe (Email)</label>
+                <input type="email" id="email" name="email" class="input-field" placeholder="mfano@barua.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Nywila (Password)</label>
+                <input type="password" id="password" name="password" class="input-field" placeholder="********" required>
+            </div>
+
+            <button type="submit" class="auth-btn">Jisajili</button>
+        </form>
+
+        <p class="footer-text">
+            Tayari una akaunti? <a href="/login">Ingia hapa</a>
+        </p>
+    </div>
+
+</body>
+</html>
